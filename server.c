@@ -11,6 +11,8 @@ struct reg {
 } registro;
 
 int main(void) {
+    FILE *fp;
+    char readbuf[80];
     umask(0);
     mknod(FIFO_FILE, S_IFIFO|0666, 0);
     while (1) {
