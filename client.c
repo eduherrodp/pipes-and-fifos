@@ -11,7 +11,7 @@ struct reg{
 
 int main(int argc, char *argv[]){
     registro.opc = 1;
-    registro.ID = 30330;
+    registro.id = 30330;
     registro.saldo = 1100;
     if ( (fp = fopen(FIFO_FILE, "w")) == NULL ) {
         perror("Error al esccribir en la tuberia\n");
