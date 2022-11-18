@@ -1,9 +1,8 @@
-// Path: client.c
-
+// Path client.c
 #include <stdio.h>
 #include <stdlib.h>
 #define FIFO_FILE "MYFIFO"
-
+FILE *fp;
 // Definition of the struct that will be used to send the data
 struct reg {
     int id;
@@ -30,7 +29,6 @@ int main (int argc, char *argv[]) {
     sprintf(buf, "%d %d %d", reg.id, reg.op, reg.amount);
     
     // Open the FIFO pipe controlling the errors
-    FILE *fp;
     if ( (fp = fopen(FIFO_FILE, "w")) == NULL ) {
         perror("Error to open the FIFO pipe");
         exit(1);
@@ -43,7 +41,9 @@ int main (int argc, char *argv[]) {
 
     return 0;
 }
-
-// How execute the program with the parameters
-// ./client 1 1 100
+// How to execute the program:
+// $ gcc -o client client.c
+// $ ./client 1 1 100
+// $ ./client 1 2 50
+// $ ./client 1 3 0
 
