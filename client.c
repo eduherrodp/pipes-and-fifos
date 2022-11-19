@@ -67,75 +67,18 @@ int main(void) {
                 break;
             case 2:
                 system("clear");
-                // The client will be to deposit money in the account
-                printf("Deposit money in the account...\n\n");
-                // Search if the account exists
-                printf("Please, insert the ID of the account: ");
-                scanf("%d", &reg.id);
-
-                // Open the fifo for writing
-                fp = fopen(FIFO_FILE, "w");
-                // Put the data in the FIFO file
-                fprintf(fp, "%d", reg.id);
-                fclose(fp);
-
-                // Get the amount to deposit
-                printf("Please, insert the amount to deposit: ");
-                scanf("%d", &reg.amount);
-
-                // Open the fifo for writing    
-                fp = fopen(FIFO_FILE, "w");
-                // Put the data in the FIFO file
-                fprintf(fp, "%d", reg.amount);
-                fclose(fp);
-
-                // Open the fifo for reading
-                fp = fopen(FIFO_FILE, "r");
-                fgets(readbuf, sizeof(readbuf), fp);
-                printf("\n%s", readbuf);
-                fclose(fp);
+                printf("Deposi")
+                
                 sleep(3);
                 break;
             case 3:
                 system("clear");
-                // The client will be to withdraw money in the account
-                printf("Withdraw money in the account...\n\n");
-                // Search if the account exists
-                printf("Please, insert the ID of the account: ");
-                scanf("%d", &reg.id);
-
-                // Open the fifo for writing
-                fp = fopen(FIFO_FILE, "w");
-                // Put the data in the FIFO file
-                fprintf(fp, "%d", reg.id);
-                fclose(fp);
-
-                // Get the amount to withdraw
-                printf("Please, insert the amount to withdraw: ");
-                scanf("%d", &reg.amount);
-
-                // Open the fifo for writing
-                fp = fopen(FIFO_FILE, "w");
-                // Put the data in the FIFO file
-                fprintf(fp, "%d", reg.amount);
-                fclose(fp);
-
-                // Open the fifo for reading
-                fp = fopen(FIFO_FILE, "r");
-                fgets(readbuf, sizeof(readbuf), fp);
-                printf("\n%s", readbuf);
-                fclose(fp);
+                
                 sleep(3);
                 break;
             case 0:
                 system("clear");
-                // The client will be to exit the program
-                printf("Exiting the program...\n\n");
-                // Open the fifo for writing
-                fp = fopen(FIFO_FILE, "w");
-                // Put the data in the FIFO file
-                fprintf(fp, "%d", reg.op);
-                fclose(fp);
+                
                 sleep(3);
                 break;
         }

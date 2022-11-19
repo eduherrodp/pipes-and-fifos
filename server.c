@@ -91,58 +91,49 @@ char *create_account() {
     }
 }
 
-//* Function to withdraw money
-char *withdraw_money() {
-    // string variable to store the message to be sent to the client
+// Function to deposit money or withdraw money
+char *DWMoney() {
     char *message;
-    // Verify if the account exists
-    if (verify_account(reg.id) == 1) {
-        // Verify if the account has enough money
-        if (verify_balance(reg.id, reg.amount) == 1) {
-            // Withdraw the money
-            FILE *fp;
-            fp = fopen("accounts.txt", "r");
-            int id, balance;
+    // if the operation is 2, deposit money, else withdraw money
+    // Verify if the account exists 
+    // ! the parameter reg.id is not necessary because is in the structure
+    if ( verify_account(reg.id) == 1 ) {
+        FILE *fp;
+        fp = open("accounts.txt", "r+");
+        int id, balance;
+        if (reg.op == 2) {
+            // Deposit the money
             while (fscanf(fp, "%d %d", &id, &balance) != EOF) {
                 if (id == reg.id) {
-                    balance -= reg.amount;
+                    balance += reg.amount;
                     printf("New balance: %d", balance);
-                    message = "[SERVER]: Withdraw successfully (%d)\n Your new balance: %d", reg.amount, balance;
+                    message = "[SERVER]: Deposit successfully (%d)\n Your new balance: %d", reg.amount, balance;
                 } else {
-                    printf("Error to withdraw money");
+                    printf("Error to deposit money");
                 }
             }
             fclose(fp);
             return message;
         } else {
-            printf("Error: The account doesn't have enough money (%d)", reg.id);
-            return "[SERVER]: The account doesn't have enough money";
-        }
-    } else {
-        printf("Error: The account doesn't exist (%d)", reg.id);
-        return "[SERVER]: Account doesn't exist";
-    }
-}
-//* Function to deposit money
-char *deposit_money() {
-    char *message;
-    // Verify if the account exists
-    if (verify_account(reg.id) == 1) {
-        // Deposit the money
-        FILE *fp;
-        fp = fopen("accounts.txt", "r");
-        int id, balance;
-        while (fscanf(fp, "%d %d", &id, &balance) != EOF) {
-            if (id == reg.id) {
-                balance += reg.amount;
-                printf("New balance: %d", balance);
-                message = "[SERVER]: Deposit successfully (%d)\n Your new balance: %d", reg.amount, balance;
+            // Verify if the account has enough money
+            if (verify_balance(reg.id, reg.amount) == 1) {
+                // Withdraw the money
+                while (fscanf(fp, "%d %d", &id, &balance) != EOF) {
+                    if (id == reg.id) {
+                        balance -= reg.amount;
+                        printf("New balance: %d", balance);
+                        message = "[SERVER]: Withdraw successfully (%d)\n Your new balance: %d", reg.amount, balance;
+                    } else {
+                        printf("Error to withdraw money");
+                    }
+                }
+                fclose(fp);
+                return message;
             } else {
-                printf("Error to deposit money");
+                printf("Error: The account doesn't have enough money (%d)", reg.id);
+                return "[SERVER]: The account doesn't have enough money";
             }
         }
-        fclose(fp);
-        return message;
     } else {
         printf("Error: The account doesn't exist (%d)", reg.id);
         return "[SERVER]: Account doesn't exist";
@@ -151,7 +142,8 @@ char *deposit_money() {
 
 int main(void) {
     system("clear");
-    printf("####[LOG]####\n\n");
+    // Print "####[LOG]####" with foreground color white and background color green"
+    printf("####[LOG]####\n"); // 
     FILE *fp;
     char readBuf[80];
     // Create the FIFO if it does not exist
@@ -173,7 +165,7 @@ int main(void) {
         switch(reg.op) {
             case 1:
                 // Create a new account
-                printf("Creating a new account...\n");
+                printf("[+]Creating a new account...\n");
                 // Open the FIFO for read only
                 fp = fopen(FIFO_FILE, "r");
                 // Read the data from the FIFO
@@ -193,89 +185,25 @@ int main(void) {
                 fclose(fp);
                 break;
             case 2:
-                // Deposit money
-                printf("Depositing money...\n");
-                // Open the FIFO for read only
+                // Deposit Money
+                printf("[+]Depositing money...\n");
                 fp = fopen(FIFO_FILE, "r");
-                // Read the data from the FIFO
                 fgets(readBuf, sizeof(readBuf), fp);
-                // Print the data read from the FIFO
                 printf("ID received: [%s]\n", readBuf);
-                // Convert the string to a struct
-                sscanf(readBuf, "%d",&reg.id);
-                // Close the FIFO
+                sscanf(readBuf, "%d", &reg.id);
                 fclose(fp);
-
-                // Open the FIFO for write only
                 fp = fopen(FIFO_FILE, "w");
-                // Write the data to the FIFO
-                fputs(deposit_money(), fp);
-                // Close the FIFO
-                fclose(fp);
-
-                // Get the amount
-                // Open the FIFO for read only
-                fp = fopen(FIFO_FILE, "r");
-                // Read the data from the FIFO
-                fgets(readBuf, sizeof(readBuf), fp);
-                // Print the data read from the FIFO
-                printf("Amount received: [%s]\n", readBuf);
-                // Convert the string to a struct
-                sscanf(readBuf, "%d",&reg.amount);
-                // Close the FIFO
-                fclose(fp);
-
-                // Open the FIFO for write only
-                fp = fopen(FIFO_FILE, "w");
-                // Write the data to the FIFO
-                fputs(deposit_money(), fp);
-                // Close the FIFO
+                fputs(DWMoney(), fp);
                 fclose(fp);
                 break;
             case 3:
-                // Withdraw money
-                printf("Withdrawing money...\n");
-                // Open the FIFO for read only
-                fp = fopen(FIFO_FILE, "r");
-                // Read the data from the FIFO
-                fgets(readBuf, sizeof(readBuf), fp);
-                // Print the data read from the FIFO
-                printf("ID received: [%s]\n", readBuf);
-                // Convert the string to a struct
-                sscanf(readBuf, "%d",&reg.id);
-                // Close the FIFO
-                fclose(fp);
-
-                // Open the FIFO for write only
-                fp = fopen(FIFO_FILE, "w");
-                // Write the data to the FIFO
-                fputs(withdraw_money(), fp);
-                // Close the FIFO
-                fclose(fp);
-
-                // Get the amount
-                // Open the FIFO for read only
-                fp = fopen(FIFO_FILE, "r");
-                // Read the data from the FIFO
-                fgets(readBuf, sizeof(readBuf), fp);
-                // Print the data read from the FIFO
-                printf("Amount received: [%s]\n", readBuf);
-                // Convert the string to a struct
-                sscanf(readBuf, "%d",&reg.amount);
-                // Close the FIFO
-                fclose(fp);
-
-                // Open the FIFO for write only
-                fp = fopen(FIFO_FILE, "w");
-                // Write the data to the FIFO
-                fputs(withdraw_money(), fp);
-                // Close the FIFO
-                fclose(fp);
+                
                 break;
             case 0: // Exit
                 printf("Exiting...\n");
                 break;
             default:
+            
                 printf("Invalid option");
         }
     } while (reg.op != 0);
