@@ -70,7 +70,8 @@ int verify_balance(int id, int amount) {
 char *create_account(int id) {
     // Verify if the account already exists
     if (verify_account(id) == 1) {
-        return "Account already exists";
+        printf("The client id already exists (%d)\n", id);
+        return "[SERVER]: Account already exists";
     } else {
         // If not exists, create the account with the initial balance of 0
         FILE *fp;
@@ -81,8 +82,9 @@ char *create_account(int id) {
             perror("Error to open the file");
             exit(1);
         }
-        fprintf(fp, "%d 0", id);
-        return "Account created successfully";
+        fprintf(fp, "\n%d 0", id);
+        printf("Client has created a new account with the id: %d\n", id);
+        return "[SERVER]: Account created successfully";
     }
 }
 
@@ -136,7 +138,6 @@ void deposit_money() {
 
 int main(void) {
     system("clear");
-    printf("waiting for connection...");
     char readBuf[80];
     char writeBuf[80]; // Proces child will write in this buffer
 
@@ -151,8 +152,16 @@ int main(void) {
         exit(1);
     }
     fgets(readBuf, sizeof(readBuf), fp);
-    printf("Received string: %s", readBuf);
+    // Put the id in the struct
+    reg.id = atoi(readBuf);
     // Close the FIFO
+    fclose(fp);
+
+    // Open the FIFO for writing
+    fp = fopen(FIFO_FILE, "w");
+    // Call and store into the writebuf the return value of the function create_account
+    strcpy(writeBuf, create_account(reg.id));
+    fprintf(fp, "%s", writeBuf);
     fclose(fp);
     return 0;
 }

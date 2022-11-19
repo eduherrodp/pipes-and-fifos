@@ -50,22 +50,22 @@ int main(void) {
             printf("Please, insert a ID for the new account: ");
             scanf("%d", &reg.id);
 
-            while (verify_account(reg.id) == 1) {
-                printf("This ID already exists, please insert a new ID: ");
-                scanf("%d", &reg.id);
-            }
-            printf("Your account was created successfully with the id: %d\n", reg.id);
-
             // Open the fifo for writing
             FILE *fp = fopen(FIFO_FILE, "w");
             if (fp == NULL) {
                 printf("Error opening file");
                 exit(1);
             }
-
             // Put the data in the FIFO file
             fprintf(fp, "%d", reg.id);
             fclose(fp);
+
+            // Open the fifo for reading
+            fp = fopen(FIFO_FILE, "r");
+            fgets(readbuf, sizeof(readbuf), fp);
+            printf("\n%s", readbuf);
+            fclose(fp);
+
             break;
     }
 
