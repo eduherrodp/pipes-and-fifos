@@ -82,7 +82,10 @@ char *create_account(int id) {
             perror("Error to open the file");
             exit(1);
         }
-        fprintf(fp, "\n%d 0", id);
+        // Add the new account to the file called "accounts.txt"
+        fprintf(fp, "\n%d 0", id); // The balance is 0
+        fclose(fp);
+        // This message only will be shown in the server
         printf("Client has created a new account with the id: %d\n", id);
         return "[SERVER]: Account created successfully";
     }
@@ -138,30 +141,57 @@ void deposit_money() {
 
 int main(void) {
     system("clear");
+    printf("####[LOG]####\n\n");
+    FILE *fp;
     char readBuf[80];
-    char writeBuf[80]; // Proces child will write in this buffer
-
     // Create the FIFO if it does not exist
     umask(0);
     mknod(FIFO_FILE, S_IFIFO | 0666, 0);
+    do {
+        printf("Waiting for a client...\n");
+        // Open the FIFO for read only
+        fp = fopen(FIFO_FILE, "r");
+        // Read the data from the FIFO
+        fgets(readBuf, sizeof(readBuf), fp);
+        // Print the data read from the FIFO
+        printf("Option received: [%s]\n", readBuf);
+        // Convert the string to a struct
+        sscanf(readBuf, "%d",&reg.op);
+        // Close the FIFO
+        fclose(fp);
 
-    // Open the FIFO for reading
-    FILE *fp = fopen(FIFO_FILE, "r");
-    if (fp == NULL) {
-        printf("Error opening file\n");
-        exit(1);
-    }
-    fgets(readBuf, sizeof(readBuf), fp);
-    // Put the id in the struct
-    reg.id = atoi(readBuf);
-    // Close the FIFO
-    fclose(fp);
+        switch(reg.op) {
+            case 1:
+                // Create a new account
+                printf("Creating a new account...\n");
+                // Open the FIFO for read only
+                fp = fopen(FIFO_FILE, "r");
+                // Read the data from the FIFO
+                fgets(readBuf, sizeof(readBuf), fp);
+                // Print the data read from the FIFO
+                printf("ID received: [%s]\n", readBuf);
+                // Convert the string to a struct
+                sscanf(readBuf, "%d",&reg.id);
+                // Close the FIFO
+                fclose(fp);
 
-    // Open the FIFO for writing
-    fp = fopen(FIFO_FILE, "w");
-    // Call and store into the writebuf the return value of the function create_account
-    strcpy(writeBuf, create_account(reg.id));
-    fprintf(fp, "%s", writeBuf);
-    fclose(fp);
+                // Open the FIFO for write only
+                fp = fopen(FIFO_FILE, "w");
+                // Write the data to the FIFO
+                fputs(create_account(reg.id), fp);
+                // Close the FIFO
+                fclose(fp);
+                break;
+            case 2:
+                
+                break;
+            case 3:
+                
+            default:
+                printf("Invalid option");
+        }
+    } while (reg.op != 0);
+
+    
     return 0;
 }
