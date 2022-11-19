@@ -20,12 +20,14 @@
         int amount;
     } reg;
 
+    This program create a conversation between the client and the server, so the client will send a structure to the server, and the server will read the structure and do the corresponding action.
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <linux/stat.h>
+#include <string.h>
 #define FIFO_FILE "MYFIFO"
 
 // Definition of the struct that will be used to send the data
@@ -36,70 +38,121 @@ struct reg {
 } reg;
 
 //TODO Functions that will be used in the program
-//* Function to create a new account
-void create_account() {
-    FILE *fp;
-    fp = fopen("accounts.txt", "a");
-    fprintf(fp, "%d %d", reg.id, reg.amount);
-    fclose(fp);
-}
-//* Function to withdraw money
-void withdraw_money() {
+//* Function to verify if the account exists if the account exists return 1, else return 0
+int verify_account(int id) {
     FILE *fp;
     fp = fopen("accounts.txt", "r");
-    char buf[100];
-    while(fgets(buf, 100, fp) != NULL) {
-        printf("%s", buf);
+    int id_file;
+    while (fscanf(fp, "%d", &id_file) != EOF) {
+        if (id_file == id) {
+            return 1;
+        }
     }
-    fclose(fp);
+    return 0;
 }
-//* Function to deposit money
-void deposit_money() {
+// Function to verify balance
+int verify_balance(int id, int amount) {
     FILE *fp;
     fp = fopen("accounts.txt", "r");
-    char buf[100];
-    while(fgets(buf, 100, fp) != NULL) {
-        printf("%s", buf);
+    int id_file, balance_file;
+    while (fscanf(fp, "%d %d", &id_file, &balance_file) != EOF) {
+        if (id_file == id) {
+            if (balance_file >= amount) {
+                return 1;
+            }
+        }
     }
-    fclose(fp);
-}
-
-
-
-int main(void) {
-    // Define the buffer that will be used to read the data from the FIFO pipe
-    char buf[100];
-
-    // Open the FIFO pipe controlling the errors
-    FILE *fp;
-    if ( (fp = fopen(FIFO_FILE, "r")) == NULL ) {
-        perror("Error to open the FIFO pipe");
-        exit(1);
-    }
-    // Read the data from the FIFO pipe
-    fread(buf, 100, fp);
-    // Close the FIFO pipe
-    fclose(fp);
-
-    // Copy the data from the buffer to the struct
-    sscanf(buf, "%d %d %d", &reg.id, &reg.op, &reg.amount);
-
-    // Check the operation that the user wants to do
-    switch(reg.op) {
-        case 1:
-            create_account();
-            break;
-        case 2:
-            withdraw_money();
-            break;
-        case 3:
-            deposit_money();
-            break;
-        default:
-            printf("Error: Invalid operation");
-            break;
-    }
-
     return 0;
 }
 
+//* Function to create a new account, return a string with the message to be sent to the client
+
+char *create_account(int id) {
+    // Verify if the account already exists
+    if (verify_account(id) == 1) {
+        return "Account already exists";
+    } else {
+        // If not exists, create the account with the initial balance of 0
+        FILE *fp;
+        fp = fopen("accounts.txt", "a");
+        // Check if the file was created correctly
+        if (fp == NULL) {
+            // This message only will be shown in the server
+            perror("Error to open the file");
+            exit(1);
+        }
+        fprintf(fp, "%d 0", id);
+        return "Account created successfully";
+    }
+}
+
+//* Function to withdraw money
+void withdraw_money() {
+    // Verify if the account exists
+    if (verify_account(reg.id) == 1) {
+        // Verify if the account has enough money
+        if (verify_balance(reg.id, reg.amount) == 1) {
+            // Withdraw the money
+            FILE *fp;
+            fp = fopen("accounts.txt", "r");
+            int id, balance;
+            while (fscanf(fp, "%d %d", &id, &balance) != EOF) {
+                if (id == reg.id) {
+                    balance -= reg.amount;
+                    printf("New balance: %d", balance);
+                } else {
+                    printf("Error to withdraw money");
+                }
+            }
+            fclose(fp);
+        } else {
+            printf("Error: The account doesn't have enough money");
+        }
+    } else {
+        printf("Error: The account doesn't exist");
+    }
+}
+//* Function to deposit money
+void deposit_money() {
+    // Verify if the account exists
+    if (verify_account(reg.id) == 1) {
+        // Deposit the money
+        FILE *fp;
+        fp = fopen("accounts.txt", "r");
+        int id, balance;
+        while (fscanf(fp, "%d %d", &id, &balance) != EOF) {
+            if (id == reg.id) {
+                balance += reg.amount;
+                printf("New balance: %d", balance);
+            } else {
+                printf("Error to deposit money");
+            }
+        }
+        fclose(fp);
+    } else {
+        printf("Error: The account doesn't exist");
+    }
+}
+
+int main(void) {
+    system("clear");
+    printf("waiting for connection...");
+    char readBuf[80];
+    char writeBuf[80]; // Proces child will write in this buffer
+
+    // Create the FIFO if it does not exist
+    umask(0);
+    mknod(FIFO_FILE, S_IFIFO | 0666, 0);
+
+    // Open the FIFO for reading
+    FILE *fp = fopen(FIFO_FILE, "r");
+    if (fp == NULL) {
+        printf("Error opening file\n");
+        exit(1);
+    }
+    fgets(readBuf, sizeof(readBuf), fp);
+    printf("Received string: %s", readBuf);
+    // Close the FIFO
+    fclose(fp);
+    return 0;
+}
