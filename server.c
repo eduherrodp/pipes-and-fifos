@@ -97,51 +97,61 @@ char *DWMoney() {
     // if the operation is 2, deposit money, else withdraw money
     // Verify if the account exists 
     // ! the parameter reg.id is not necessary because is in the structure
-    if ( verify_account(reg.id) == 1 ) {
-        FILE *fp;
-        fp = open("accounts.txt", "r+");
-        int id, balance;
-        if (reg.op == 2) {
-            // Deposit the money
-            while (fscanf(fp, "%d %d", &id, &balance) != EOF) {
-                if (id == reg.id) {
-                    balance += reg.amount;
-                    printf("New balance: %d", balance);
-                    message = "[SERVER]: Deposit successfully (%d)\n Your new balance: %d", reg.amount, balance;
-                } else {
-                    printf("Error to deposit money");
-                }
-            }
-            fclose(fp);
-            return message;
-        } else {
-            // Verify if the account has enough money
-            if (verify_balance(reg.id, reg.amount) == 1) {
-                // Withdraw the money
-                while (fscanf(fp, "%d %d", &id, &balance) != EOF) {
-                    if (id == reg.id) {
-                        balance -= reg.amount;
-                        printf("New balance: %d", balance);
-                        message = "[SERVER]: Withdraw successfully (%d)\n Your new balance: %d", reg.amount, balance;
-                    } else {
-                        printf("Error to withdraw money");
-                    }
-                }
-                fclose(fp);
-                return message;
+    FILE *fp;
+    fp = fopen("accounts.txt", "r");
+    int id, balance;
+
+    // Deposit the money
+    rewind(fp);
+    while (fscanf(fp, "%d %d", &id, &balance) != EOF) {
+        // When the id will be founded modify the balance in the file
+        if (id == reg.id) {
+
+            // Check if the user wants deposit or withdraw money
+
+            if(reg.op == 2) {
+                // Deposit money
+                balance += reg.amount;
+
+                printf("The client with the id: %d has deposited %d\n", reg.id, reg.amount);
+                message = "[SERVER]: Deposit successfully";
             } else {
-                printf("Error: The account doesn't have enough money (%d)", reg.id);
-                return "[SERVER]: The account doesn't have enough money";
+                // Withdraw money
+
+                // Verify if the balance is enough to withdraw the money
+                if (verify_balance(reg.id, reg.amount) == 1) {
+                    balance -= reg.amount;
+                    printf("The client with the id: %d has withdrawn %d\n", reg.id, reg.amount);
+                    message = "[SERVER]: Withdraw successfully";
+                } else {
+                    printf("The client with the id: %d has not enough balance to withdraw %d\n", reg.id, reg.amount);
+                    message = "[SERVER]: Not enough balance";
+                }
             }
         }
-    } else {
-        printf("Error: The account doesn't exist (%d)", reg.id);
-        return "[SERVER]: Account doesn't exist";
+        // Write the new data in a temporal file
+        FILE *fp_temp;
+        fp_temp = fopen("temp.txt", "a");
+        if (fp_temp == NULL) {
+            perror("Error to open the file");
+            exit(1);
+        }
+        if (ftell(fp_temp) != 0) {
+            fprintf(fp_temp, "\n%d %d", id, balance);
+        } else {
+            fprintf(fp_temp, "%d %d", id, balance);
+        }
+        fclose(fp_temp);       
     }
+    fclose(fp);
+    remove("accounts.txt");
+    rename("temp.txt", "accounts.txt");
+    return message;
 }
 
 int main(void) {
     system("clear");
+    int temp;
     // Print "####[LOG]####" with foreground color white and background color green"
     printf("####[LOG]####\n"); // 
     FILE *fp;
@@ -192,12 +202,66 @@ int main(void) {
                 printf("ID received: [%s]\n", readBuf);
                 sscanf(readBuf, "%d", &reg.id);
                 fclose(fp);
+
                 fp = fopen(FIFO_FILE, "w");
-                fputs(DWMoney(), fp);
+                temp = verify_account(reg.id);
+                // Put the data of temp in the FIFO
+                fprintf(fp, "%d", temp);
+                fclose(fp);
+
+                // Verify if the account exists
+                if (verify_account(reg.id) == 1) {
+                    // Then, the account exists
+                    
+                    fp = fopen(FIFO_FILE, "r");
+                    fgets(readBuf, sizeof(readBuf), fp);
+                    sscanf(readBuf, "%d", &reg.amount);
+                    printf("Amount to deposit to the account [%d]: %d\n", reg.id, reg.amount);
+                    fclose(fp);    
+                    
+                    fp = fopen(FIFO_FILE, "w");
+                    fputs(DWMoney(), fp);
+                } else {
+                    printf("\nThe account (%d) doesn't exist\n", reg.id);
+                    fp = fopen(FIFO_FILE, "w");
+                    fputs("[SERVER]: The account doesn't exist", fp);
+                }
                 fclose(fp);
                 break;
             case 3:
-                
+                // Withdraw Money
+                printf("[+]Withdrawing money...\n");
+                fp = fopen(FIFO_FILE, "r");
+                fgets(readBuf, sizeof(readBuf), fp);
+                printf("ID received: [%s]\n", readBuf);
+                sscanf(readBuf, "%d", &reg.id);
+                fclose(fp);
+
+                fp = fopen(FIFO_FILE, "w");
+                temp = verify_account(reg.id);
+                // Put the data of temp in the FIFO
+                fprintf(fp, "%d", temp);
+                fclose(fp);
+
+                // Verify if the account exists
+
+                if (verify_account(reg.id) == 1) {
+                    // Then, the account exists
+                    
+                    fp = fopen(FIFO_FILE, "r");
+                    fgets(readBuf, sizeof(readBuf), fp);
+                    sscanf(readBuf, "%d", &reg.amount);
+                    printf("Amount to withdraw to the account [%d]: %d\n", reg.id, reg.amount);
+                    fclose(fp);    
+                    
+                    fp = fopen(FIFO_FILE, "w");
+                    fputs(DWMoney(), fp);
+                } else {
+                    printf("\nThe account (%d) doesn't exist\n", reg.id);
+                    fp = fopen(FIFO_FILE, "w");
+                    fputs("[SERVER]: The account doesn't exist", fp);
+                }
+                fclose(fp);                
                 break;
             case 0: // Exit
                 printf("Exiting...\n");

@@ -42,6 +42,7 @@ int main(void) {
         // Put the data in the FIFO file
         fprintf(fp, "%d", reg.op);
         fclose(fp);
+        int temp;
         switch (reg.op) {
             case 1:
                 system("clear");
@@ -67,13 +68,79 @@ int main(void) {
                 break;
             case 2:
                 system("clear");
-                printf("Deposi")
+                printf("Depositing money...\n\n");
+                printf("Please, insert your ID: ");
+                scanf("%d", &reg.id);
                 
+                // First verify if the account exists
+                
+                fp = fopen(FIFO_FILE, "w");
+                fprintf(fp, "%d", reg.id);
+                fclose(fp);
+                
+                // Get the data from the FIFO file
+                fp = fopen(FIFO_FILE, "r");
+                fgets(readbuf, sizeof(readbuf), fp);
+                sscanf(readbuf, "%d", &temp);
+                fclose(fp);
+
+                if (temp == 1) {
+                    printf("\n\tAccount found! [%d]\n", reg.id);
+                    printf("Please, insert the amount to deposit: ");
+                    scanf("%d", &reg.amount);
+                    // Open the fifo for writing
+                    fp = fopen(FIFO_FILE, "w");
+                    // Put the data in the FIFO file
+                    fprintf(fp, "%d", reg.amount);
+                    fclose(fp);
+                    // Open the fifo for reading
+                    fp = fopen(FIFO_FILE, "r");
+                    fgets(readbuf, sizeof(readbuf), fp);
+                    printf("\n%s", readbuf);
+                    fclose(fp);
+                    // Wait 3 seconds
+                    sleep(3);
+                } else {
+                    printf("The account does not exist!\n");
+                }
                 sleep(3);
                 break;
             case 3:
                 system("clear");
-                
+                printf("Withdrawing money...\n\n");
+                printf("Please, insert your ID: ");
+                scanf("%d", &reg.id);
+
+                // First verify if the account exists
+                fp = fopen(FIFO_FILE, "w");
+                fprintf(fp, "%d", reg.id);
+                fclose(fp);
+
+                // Get the data from the FIFO file
+                fp = fopen(FIFO_FILE, "r");
+                fgets(readbuf, sizeof(readbuf), fp);
+                sscanf(readbuf, "%d", &temp);
+                fclose(fp);
+
+                if (temp == 1) {
+                    printf("\n\tAccount found! [%d]\n", reg.id);
+                    printf("Please, insert the amount to withdraw: ");
+                    scanf("%d", &reg.amount);
+                    // Open the fifo for writing
+                    fp = fopen(FIFO_FILE, "w");
+                    // Put the data in the FIFO file
+                    fprintf(fp, "%d", reg.amount);
+                    fclose(fp);
+                    // Open the fifo for reading
+                    fp = fopen(FIFO_FILE, "r");
+                    fgets(readbuf, sizeof(readbuf), fp);
+                    printf("\n%s", readbuf);
+                    fclose(fp);
+                    // Wait 3 seconds
+                    sleep(3);
+                } else {
+                    printf("The account does not exist!\n");
+                }
                 sleep(3);
                 break;
             case 0:
