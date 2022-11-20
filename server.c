@@ -70,8 +70,8 @@ int verify_balance(int id, int amount) {
 char *create_account() {
     // Verify if the account already exists
     if (verify_account(reg.id) == 1) {
-        printf("The client id already exists (%d)\n", reg.id);
-        return "[SERVER]: Account already exists";
+        printf("\033[33;1mThe client id already exists (%d)\n\033[0m", reg.id);
+        return "\033[33;1m[SERVER]: Account already exists\033[0m";
     } else {
         // If not exists, create the account with the initial balance of 0
         FILE *fp;
@@ -79,15 +79,15 @@ char *create_account() {
         // Check if the file was created correctly
         if (fp == NULL) {
             // This message only will be shown in the server
-            perror("Error to open the file");
+            perror("\033[31m;1mError to open the file\033[0m");
             exit(1);
         }
         // Add the new account to the file called "accounts.txt"
         fprintf(fp, "\n%d 0", reg.id); // The balance is 0
         fclose(fp);
         // This message only will be shown in the server
-        printf("Client has created a new account with the id: %d\n", reg.id);
-        return "[SERVER]: Account created successfully";
+        printf("\033[32;1mClient has created a new account with the id: %d\n\033[0m", reg.id);
+        return "\033[32;1m[SERVER]: Account created successfully\033[0m";
     }
 }
 
@@ -113,19 +113,21 @@ char *DWMoney() {
                 // Deposit money
                 balance += reg.amount;
 
-                printf("The client with the id: %d has deposited %d\n", reg.id, reg.amount);
-                message = "[SERVER]: Deposit successfully";
+                printf("\033[32;1mThe client with the id: %d has deposited %d\nNew balance is: %d\n\033[0m", reg.id, reg.amount, balance);
+                // Show the message and the balance
+                // Concat the message with the balance
+                message = "\033[32;1m[SERVER]: Deposit succesfully\033[0m";
             } else {
                 // Withdraw money
 
                 // Verify if the balance is enough to withdraw the money
                 if (verify_balance(reg.id, reg.amount) == 1) {
                     balance -= reg.amount;
-                    printf("The client with the id: %d has withdrawn %d\n", reg.id, reg.amount);
-                    message = "[SERVER]: Withdraw successfully";
+                    printf("\033[32;1mThe client with the id: %d has withdrawn %d\nNew balance:  %d\n\033[0m", reg.id, reg.amount, balance);
+                    message = "\033[32;1m[SERVER]: Withdraw succesfully\033[0m";
                 } else {
-                    printf("The client with the id: %d has not enough balance to withdraw %d\n", reg.id, reg.amount);
-                    message = "[SERVER]: Not enough balance";
+                    printf("\033[33;1mThe client with the id: %d has not enough balance to withdraw %d\n\033[0m", reg.id, reg.amount);
+                    message = "\033[33;1m[SERVER]: Not enough balance\033[0m";
                 }
             }
         }
@@ -133,7 +135,7 @@ char *DWMoney() {
         FILE *fp_temp;
         fp_temp = fopen("temp.txt", "a");
         if (fp_temp == NULL) {
-            perror("Error to open the file");
+            perror("\033[31;1mError to open the file\033[0m");
             exit(1);
         }
         if (ftell(fp_temp) != 0) {
@@ -148,19 +150,18 @@ char *DWMoney() {
     rename("temp.txt", "accounts.txt");
     return message;
 }
-
 int main(void) {
     system("clear");
     int temp;
     // Print "####[LOG]####" with foreground color white and background color green"
-    printf("####[LOG]####\n"); // 
+    printf("\033[31;42;1;3;4m####[LOG]####\n\033[0m"); // 
     FILE *fp;
     char readBuf[80];
     // Create the FIFO if it does not exist
     umask(0);
     mknod(FIFO_FILE, S_IFIFO | 0666, 0);
     do {
-        printf("Waiting for a client...\n");
+        printf("\033[33;1m[+]Waiting for a client...\n\033[0m");
         // Open the FIFO for read only
         fp = fopen(FIFO_FILE, "r");
         // Read the data from the FIFO
@@ -175,7 +176,7 @@ int main(void) {
         switch(reg.op) {
             case 1:
                 // Create a new account
-                printf("[+]Creating a new account...\n");
+                printf("\033[33;1m[+]Creating a new account...\n\033[0m");
                 // Open the FIFO for read only
                 fp = fopen(FIFO_FILE, "r");
                 // Read the data from the FIFO
@@ -196,7 +197,7 @@ int main(void) {
                 break;
             case 2:
                 // Deposit Money
-                printf("[+]Depositing money...\n");
+                printf("\033[33;1m[+]Depositing money...\n\033[0m");
                 fp = fopen(FIFO_FILE, "r");
                 fgets(readBuf, sizeof(readBuf), fp);
                 printf("ID received: [%s]\n", readBuf);
@@ -222,15 +223,15 @@ int main(void) {
                     fp = fopen(FIFO_FILE, "w");
                     fputs(DWMoney(), fp);
                 } else {
-                    printf("\nThe account (%d) doesn't exist\n", reg.id);
+                    printf("\033[33;1mThe account (%d) doesn't exist\n\033[0m", reg.id);
                     fp = fopen(FIFO_FILE, "w");
-                    fputs("[SERVER]: The account doesn't exist", fp);
+                    fputs("\033[33;1m[SERVER]: The account doesn't exist\n\033[0m", fp);
                 }
                 fclose(fp);
                 break;
             case 3:
                 // Withdraw Money
-                printf("[+]Withdrawing money...\n");
+                printf("\033[33;1m[+]Withdrawing money...\n\033[0m");
                 fp = fopen(FIFO_FILE, "r");
                 fgets(readBuf, sizeof(readBuf), fp);
                 printf("ID received: [%s]\n", readBuf);
@@ -257,18 +258,18 @@ int main(void) {
                     fp = fopen(FIFO_FILE, "w");
                     fputs(DWMoney(), fp);
                 } else {
-                    printf("\nThe account (%d) doesn't exist\n", reg.id);
+                    printf("\n\033[33;1mThe account (%d) doesn't exist\n\033[0m", reg.id);
                     fp = fopen(FIFO_FILE, "w");
-                    fputs("[SERVER]: The account doesn't exist", fp);
+                    fputs("\033[33;1m[SERVER]: The account doesn't exist\n\033[0m", fp);
                 }
                 fclose(fp);                
                 break;
             case 0: // Exit
-                printf("Exiting...\n");
+                printf("\033[33;1mExiting...\n\033[0m");
                 break;
             default:
             
-                printf("Invalid option");
+                printf("\033[33;1mInvalid option\n\033[0m");
         }
     } while (reg.op != 0);
 

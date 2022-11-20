@@ -34,7 +34,7 @@ int main(void) {
     do {
         // Show the menu to the client
         system("clear");
-        printf("\n 1 - Create account\n 2 - Deposit\n 3 - Withdraw\n 0 - Exit\n");
+        printf("\nWelcome!\n\n 1 - Create account\n 2 - Deposit\n 3 - Withdraw\n 0 - Exit\n");
         printf("\nEnter the option: ");
         scanf("%d", &reg.op);
          // Open the fifo to writing
@@ -64,7 +64,7 @@ int main(void) {
                 printf("\n%s", readbuf);
                 fclose(fp);
                 // Wait 3 seconds
-                sleep(3);
+                sleep(2);
                 break;
             case 2:
                 system("clear");
@@ -98,12 +98,11 @@ int main(void) {
                     fgets(readbuf, sizeof(readbuf), fp);
                     printf("\n%s", readbuf);
                     fclose(fp);
-                    // Wait 3 seconds
-                    sleep(3);
+
                 } else {
                     printf("The account does not exist!\n");
                 }
-                sleep(3);
+                sleep(2);
                 break;
             case 3:
                 system("clear");
@@ -136,17 +135,20 @@ int main(void) {
                     fgets(readbuf, sizeof(readbuf), fp);
                     printf("\n%s", readbuf);
                     fclose(fp);
-                    // Wait 3 seconds
-                    sleep(3);
                 } else {
                     printf("The account does not exist!\n");
                 }
-                sleep(3);
+                sleep(2);
                 break;
             case 0:
                 system("clear");
-                
-                sleep(3);
+                printf("Exiting...\n\n");
+                sleep(2);
+                break;
+            default:
+                system("clear");
+                printf("Invalid option!\n\n");
+                sleep(2);
                 break;
         }
     } while(reg.op != 0);
